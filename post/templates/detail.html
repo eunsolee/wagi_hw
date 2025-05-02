@@ -1,0 +1,13 @@
+<h1>{{ post.title }}</h1>
+<p>작성자: {{ post.author.username }}</p>
+<p>{{ post.body }}</p>
+
+{% for image in post.images.all %}
+    <img src="{{ image.image.url }}" width="300">
+{% endfor %}
+
+<!-- 수정 버튼 추가! -->
+<a href="{% url 'edit' post.id %}">수정하기</a>
+
+<!-- 목록 돌아가기 -->
+<a href="{% url 'home' %}">목록으로 가기</a>
