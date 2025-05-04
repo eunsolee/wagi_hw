@@ -5,7 +5,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('write/', views.write, name='write'),
     path('detail/<int:post_id>/', views.detail, name='detail'),
-    path('edit/<int:post_id>/', views.edit, name='edit'),  # ← 수정 추가
+    path('edit/<int:post_id>/', views.edit, name='edit'),  
     path('accounts/', include('django.contrib.auth.urls')),
+    path('signup/', views.signup, name='signup'),
 ]
 

@@ -3,10 +3,10 @@
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     {{ post_form.as_p }}
-    {{ formset.management_form }}
-    {% for form in formset %}
-        {{ form.as_p }}
-    {% endfor %}
+
+    <label>이미지 업로드:</label><br>
+    <input type="file" name="images" multiple><br><br>
+
     <button type="submit">작성 완료</button>
 </form>
 

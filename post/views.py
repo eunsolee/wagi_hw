@@ -1,9 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Post, Image
-from .forms import PostForm, ImageForm
-from django.forms import modelformset_factory
+from .forms import PostForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    return render(request, 'signup.html', {'form': form})
+
 def home(request):
     posts = Post.objects.all()
     return render(request, 'list.html', {'posts': posts})
@@ -14,31 +27,23 @@ def detail(request, post_id):
 
 @login_required
 def write(request):
-    ImageFormSet = modelformset_factory(Image, form=ImageForm, extra=3)  # 3개 파일 기본 제공
-
     if request.method == 'POST':
         post_form = PostForm(request.POST)
-        formset = ImageFormSet(request.POST, request.FILES, queryset=Image.objects.none())
+        images = request.FILES.getlist('images')
 
-        if post_form.is_valid() and formset.is_valid():
+        if post_form.is_valid():
             post = post_form.save(commit=False)
             post.author = request.user
-            post = post_form.save()
+            post.save()
 
-            for form in formset.cleaned_data:
-                if form:
-                    image = form['image']
-                    Image.objects.create(post=post, image=image)
+            for image in images:
+                Image.objects.create(post=post, image=image)
 
             return redirect('home')
     else:
         post_form = PostForm()
-        formset = ImageFormSet(queryset=Image.objects.none())
 
-    return render(request, 'write.html', {
-        'post_form': post_form,
-        'formset': formset,
-    })
+    return render(request, 'write.html', {'post_form': post_form})
 
 @login_required
 def edit(request, post_id):
