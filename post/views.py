@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Post, Image
 from .forms import PostForm
+from .forms import PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.forms import UserCreationForm
@@ -23,7 +24,23 @@ def home(request):
 
 def detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    return render(request, 'detail.html', {'post': post})
+    comments = post.comments.all().order_by('-created_at')
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.save()
+            return redirect('detail', post_id=post.id)
+    else:
+        form = CommentForm()
+
+    return render(request, 'detail.html', {
+        'post': post,
+        'comments': comments,
+        'form': form
+    })
 
 @login_required
 def write(request):
@@ -58,3 +75,53 @@ def edit(request, post_id):
     else:
         form = PostForm(instance=post)
     return render(request, 'edit.html', {'form': form})
+
+@login_required
+def toggle_like(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+
+    if user in post.likes.all():
+        post.likes.remove(user)
+    else:
+        post.likes.add(user)
+
+    return redirect('detail', post_id=post.id)
+
+def edit_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    images = post.images.all()
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+        files = request.FILES.getlist('image')
+
+        # 삭제할 이미지 ID 리스트 받기
+        delete_ids = request.POST.getlist('delete_images')
+
+        if form.is_valid():
+            form.save()
+
+            # 기존 이미지 삭제
+            for img_id in delete_ids:
+                image = Image.objects.get(id=img_id)
+                image.delete()
+
+            # 새 이미지 추가
+            for file in files:
+                ext = file.name.split('.')[-1]
+                filename = f"{uuid4().hex}.{ext}"
+                save_path = os.path.join(settings.MEDIA_ROOT, 'post_images', filename)
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+                with open(save_path, 'wb+') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+
+                Image.objects.create(post=post, image_path=f'post_images/{filename}')
+
+            return redirect('detail', post_id=post.id)
+    else:
+        form = PostForm(instance=post)
+
+    return render(request, 'edit.html', {'form': form, 'post': post, 'images': images})

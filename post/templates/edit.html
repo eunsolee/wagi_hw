@@ -1,9 +1,31 @@
+<p>이미지 개수: {{ images|length }}</p>
+
+{% for image in images %}
+  <p>{{ image.image_path }}</p>
+{% empty %}
+  <p>등록된 이미지가 없습니다.</p>
+{% endfor %}
+
+
 <h1>글 수정</h1>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
 
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">수정 완료</button>
+  <h3>기존 이미지</h3>
+  {% for image in images %}
+    <div>
+      <img src="{{ MEDIA_URL }}{{ image.image_path }}" width="150">
+      <label>
+        삭제 <input type="checkbox" name="delete_images" value="{{ image.id }}">
+      </label>
+    </div>
+  {% empty %}
+    <p>등록된 이미지가 없습니다.</p>
+  {% endfor %}
+
+  <h3>새 이미지 추가</h3>
+  <input type="file" name="image" multiple>
+
+  <button type="submit">수정 완료</button>
 </form>
-
-<a href="{% url 'home' %}">목록으로 돌아가기</a>

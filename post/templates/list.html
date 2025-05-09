@@ -2,9 +2,9 @@
 
 {% if user.is_authenticated %}
     <p>안녕하세요, {{ user.username }}님 | <a href="{% url 'logout' %}">로그아웃</a></p>
-    <a href="{% url 'write' %}">➕ 글 작성</a>
+    <a href="{% url 'write' %}">글 작성</a>
 {% else %}
-    <a href="{% url 'login' %}">🔐 로그인</a> |
+    <a href="{% url 'login' %}">로그인</a> |
     <a href="{% url 'signup' %}">회원가입</a>
 {% endif %}
 
