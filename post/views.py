@@ -19,8 +19,13 @@ def signup(request):
     return render(request, 'signup.html', {'form': form})
 
 def home(request):
-    posts = Post.objects.all()
-    return render(request, 'list.html', {'posts': posts})
+    query = request.GET.get('q', '')
+    if query:
+        posts = Post.objects.filter(title__icontains=query).order_by('-created_at')
+    else:
+        posts = Post.objects.all().order_by('-created_at')
+
+    return render(request, 'list.html', {'posts': posts, 'query': query})
 
 def detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)

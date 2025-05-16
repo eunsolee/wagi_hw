@@ -1,5 +1,30 @@
 <h1>글 목록</h1>
 
+<form method="get" action="{% url 'home' %}">
+  <input type="text" name="q" placeholder="제목 검색" value="{{ query }}">
+  <button type="submit">검색</button>
+</form>
+
+<ul>
+  {% if query %}
+    {% if posts %}
+      {% for post in posts %}
+        <li><a href="{% url 'detail' post.id %}">{{ post.title }}</a></li>
+      {% endfor %}
+    {% else %}
+      <li>검색 결과가 없습니다.</li>
+    {% endif %}
+  {% else %}
+    {% if posts %}
+      {% for post in posts %}
+        <li><a href="{% url 'detail' post.id %}">{{ post.title }}</a></li>
+      {% endfor %}
+    {% else %}
+      <li>작성된 글이 없습니다.</li>
+    {% endif %}
+  {% endif %}
+</ul>
+
 {% if user.is_authenticated %}
     <p>안녕하세요, {{ user.username }}님 | <a href="{% url 'logout' %}">로그아웃</a></p>
     <a href="{% url 'write' %}">글 작성</a>
@@ -7,13 +32,3 @@
     <a href="{% url 'login' %}">로그인</a> |
     <a href="{% url 'signup' %}">회원가입</a>
 {% endif %}
-
-<ul>
-    {% for post in posts %}
-        <li>
-            <a href="{% url 'detail' post.id %}">{{ post.title }}</a><br>
-        </li>
-    {% empty %}
-        <li>작성된 글이 없습니다.</li>
-    {% endfor %}
-</ul>
