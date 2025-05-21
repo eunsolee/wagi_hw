@@ -4,28 +4,33 @@ from .forms import PostForm
 from .forms import PostForm, CommentForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-
-def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)  
-            return redirect('home')
-    else:
-        form = UserCreationForm()
-    return render(request, 'signup.html', {'form': form})
+from django.db.models import Q
 
 def home(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    option = request.GET.get('option', 'all')
+
     if query:
-        posts = Post.objects.filter(title__icontains=query).order_by('-created_at')
+        words = [word for word in query.replace(',', ' ').split() if word]
+
+        q_object = Q()
+        for word in words:
+            if option == 'title':
+                q_object |= Q(title__icontains=word)
+            elif option == 'content':
+                q_object |= Q(body__icontains=word)
+            else:
+                q_object |= Q(title__icontains=word) | Q(body__icontains=word)
+
+        posts = Post.objects.filter(q_object).order_by('-created_at')
     else:
         posts = Post.objects.all().order_by('-created_at')
 
-    return render(request, 'list.html', {'posts': posts, 'query': query})
+    return render(request, 'list.html', {
+        'posts': posts,
+        'query': query,
+        'option': option
+    })
 
 def detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -37,7 +42,7 @@ def detail(request, post_id):
             comment = form.save(commit=False)
             comment.post = post
             comment.save()
-            return redirect('detail', post_id=post.id)
+            return redirect('post:detail', post_id=post.id)
     else:
         form = CommentForm()
 
@@ -61,7 +66,7 @@ def write(request):
             for image in images:
                 Image.objects.create(post=post, image=image)
 
-            return redirect('home')
+            return redirect('post:home')
     else:
         post_form = PostForm()
 
@@ -76,7 +81,7 @@ def edit(request, post_id):
         form = PostForm(request.POST, instance=post)
         if form.is_valid():
             form.save()
-            return redirect('detail', post_id=post.id)
+            return redirect('post:detail', post_id=post.id)
     else:
         form = PostForm(instance=post)
     return render(request, 'edit.html', {'form': form})
@@ -91,7 +96,7 @@ def toggle_like(request, post_id):
     else:
         post.likes.add(user)
 
-    return redirect('detail', post_id=post.id)
+    return redirect('post:detail', post_id=post.id)
 
 def edit_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -109,23 +114,18 @@ def edit_post(request, post_id):
 
             # 기존 이미지 삭제
             for img_id in delete_ids:
-                image = Image.objects.get(id=img_id)
-                image.delete()
+                try:
+                    image = Image.objects.get(id=img_id)
+                    image.delete()
+                except Image.DoesNotExist:
+                    pass
 
-            # 새 이미지 추가
-            for file in files:
-                ext = file.name.split('.')[-1]
-                filename = f"{uuid4().hex}.{ext}"
-                save_path = os.path.join(settings.MEDIA_ROOT, 'post_images', filename)
-                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            images = request.FILES.getlist('new_image')
 
-                with open(save_path, 'wb+') as destination:
-                    for chunk in file.chunks():
-                        destination.write(chunk)
+            for image in images:
+                Image.objects.create(post=post, image=image)
 
-                Image.objects.create(post=post, image_path=f'post_images/{filename}')
-
-            return redirect('detail', post_id=post.id)
+            return redirect('post:detail', post_id=post.id)
     else:
         form = PostForm(instance=post)
 

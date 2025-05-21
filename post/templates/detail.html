@@ -7,12 +7,12 @@
 {% endfor %}
 
 <!-- 수정 버튼 추가! -->
-<a href="{% url 'edit' post.id %}">수정하기</a>
+<a href="{% url 'post:edit' post.id %}">수정하기</a>
 
 <!-- 목록 돌아가기 -->
-<a href="{% url 'home' %}">목록으로 가기</a>
+<a href="{% url 'post:home' %}">목록으로 가기</a>
 
-<form action="{% url 'toggle_like' post.id %}" method="post">
+<form action="{% url 'post:toggle_like' post.id %}" method="post">
     {% csrf_token %}
     <button type="submit">
       {% if user in post.likes.all %}

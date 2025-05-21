@@ -1,34 +1,34 @@
 <h1>글 목록</h1>
 
-<form method="get" action="{% url 'home' %}">
-  <input type="text" name="q" placeholder="제목 검색" value="{{ query }}">
+<form method="get" action="{% url 'post:home' %}">
+  <input type="text" name="q" placeholder="검색어" value="{{ request.GET.q }}">
+  <select name="option">
+    <option value="all" {% if request.GET.option == 'all' %}selected{% endif %}>전체</option>
+    <option value="title" {% if request.GET.option == 'title' %}selected{% endif %}>제목</option>
+    <option value="content" {% if request.GET.option == 'content' %}selected{% endif %}>내용</option>
+  </select>
   <button type="submit">검색</button>
 </form>
 
 <ul>
-  {% if query %}
-    {% if posts %}
-      {% for post in posts %}
-        <li><a href="{% url 'detail' post.id %}">{{ post.title }}</a></li>
-      {% endfor %}
-    {% else %}
-      <li>검색 결과가 없습니다.</li>
-    {% endif %}
+  {% if posts %}
+    {% for post in posts %}
+      <li><a href="{% url 'post:detail' post.id %}">{{ post.title }}</a></li>
+    {% endfor %}
   {% else %}
-    {% if posts %}
-      {% for post in posts %}
-        <li><a href="{% url 'detail' post.id %}">{{ post.title }}</a></li>
-      {% endfor %}
+    {% if query %}
+      <li>검색 결과가 없습니다.</li>
     {% else %}
       <li>작성된 글이 없습니다.</li>
     {% endif %}
   {% endif %}
 </ul>
 
+
 {% if user.is_authenticated %}
-    <p>안녕하세요, {{ user.username }}님 | <a href="{% url 'logout' %}">로그아웃</a></p>
-    <a href="{% url 'write' %}">글 작성</a>
+    <p>안녕하세요, {{ user.username }}님 | <a href="{% url 'user:logout' %}">로그아웃</a></p>
+    <a href="{% url 'post:write' %}">글 작성</a>
 {% else %}
-    <a href="{% url 'login' %}">로그인</a> |
-    <a href="{% url 'signup' %}">회원가입</a>
+    <a href="{% url 'user:login' %}">로그인</a> |
+    <a href="{% url 'user:signup' %}">회원가입</a>
 {% endif %}

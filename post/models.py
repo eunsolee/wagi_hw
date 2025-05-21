@@ -2,9 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 
-
-
-
 class Post(models.Model):
     title = models.CharField(max_length=100)
     body = models.TextField()

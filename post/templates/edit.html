@@ -6,7 +6,7 @@
   <h3>기존 이미지</h3>
   {% for image in images %}
     <div>
-      <img src="{{ MEDIA_URL }}{{ image.image_path }}" width="150">
+      <img src="{{ image.image.url }}" width="150">
       <label>
         삭제 <input type="checkbox" name="delete_images" value="{{ image.id }}">
       </label>
@@ -16,7 +16,7 @@
   {% endfor %}
 
   <h3>새 이미지 추가</h3>
-  <input type="file" name="image" multiple>
+  <input type="file" name="new_image" multiple>
 
   <button type="submit">수정 완료</button>
 </form>
