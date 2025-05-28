@@ -6,30 +6,41 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 
+from django.db.models import Q
+
 def home(request):
     query = request.GET.get('q', '').strip()
     option = request.GET.get('option', 'all')
 
     if query:
-        words = [word for word in query.replace(',', ' ').split() if word]
-
         q_object = Q()
-        for word in words:
-            if option == 'title':
-                q_object |= Q(title__icontains=word)
-            elif option == 'content':
-                q_object |= Q(body__icontains=word)
-            else:
-                q_object |= Q(title__icontains=word) | Q(body__icontains=word)
+        if option == 'title':
+            q_object = Q(title__icontains=query)
+        elif option == 'content':
+            q_object = Q(body__icontains=query)
+        else:
+            q_object = Q(title__icontains=query) | Q(body__icontains=query)
 
-        posts = Post.objects.filter(q_object).order_by('-created_at')
+        posts = Post.objects.filter(q_object)
+
+        def keyword_count(post):
+            if option == 'title':
+                text = post.title
+            elif option == 'content':
+                text = post.body
+            else:
+                text = f"{post.title} {post.body}"
+            return text.lower().count(query.lower())
+
+        posts = sorted(posts, key=keyword_count, reverse=True)
+
     else:
         posts = Post.objects.all().order_by('-created_at')
 
     return render(request, 'list.html', {
         'posts': posts,
         'query': query,
-        'option': option
+        'option': option,
     })
 
 def detail(request, post_id):
