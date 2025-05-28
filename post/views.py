@@ -6,8 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 
-from django.db.models import Q
-
 def home(request):
     query = request.GET.get('q', '').strip()
     option = request.GET.get('option', 'all')
